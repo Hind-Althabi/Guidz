@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guidz</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <div class="logo">
+                <img src="/static/guidz.png" alt="Logo">
+            </div>
+
+            <div class="chatbot">
+                <h1>Guidz Chatbot</h1>
+                <input type="text" id="user-input" placeholder="Name of the place or activity you are looking for">
+                
+               
+                <button id="location-button"> Search</button>
+                <button id="tour-schedule-button">Generate Tour</button>
+                <button id="generate-pdf-events-button">Boulevard City</button>
+                <button id="send-email-button">Send via mail</button>
+
+                <div id="loading" class="loading" style="display:none;">Loading...</div>
+                <div id="response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        document.getElementById('location-button').onclick = function() {
+            const userInput = document.getElementById('user-input').value;
+            handleLocationQuery(userInput);
+        };
+
+        document.getElementById('tour-schedule-button').onclick = function() {
+            const userInput = document.getElementById('user-input').value;
+            handleTourSchedule(userInput);
+        };
+
+        document.getElementById('generate-pdf-events-button').onclick = function() {
+            const userInput = document.getElementById('user-input').value;
+            handleGenerateTourFromPdf(userInput);
+        };
+
+        document.getElementById('send-email-button').onclick = function() {
+            const tourDetails = document.getElementById('response').innerText;
+            handleSendEmail(tourDetails);
+        };
+
+        function handleLocationQuery(userInput) {
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.style.display = 'block';  
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '';  
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ request: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';  
+                responseDiv.innerHTML = '<h2>Result:</h2>';
+                if (data.length === 0) {
+                    responseDiv.innerHTML += '<p>No places matching your search</p>';
+                } else {
+                    data.forEach(place => {
+                        responseDiv.innerHTML += `<p>${place.name}:  <br> <a href="${place.google_maps_url}" target="_blank">View on Google Maps</a></p>`;
+                    });
+                }
+            })
+            .catch(error => {
+                loadingDiv.style.display = 'none';  
+                console.error('Error:', error);
+                responseDiv.innerHTML = '<p>An error occurred while fetching the data.</p>';
+            });
+        }
+
+        function handleTourSchedule(userInput) {
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.style.display = 'block';  
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '';  
+
+            fetch('/generate-tour', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ interest: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';  
+                responseDiv.innerHTML = '<h2>Tour schedule:</h2>';
+                if (data.length === 0) {
+                    responseDiv.innerHTML += '<p>No tours available for these activities.</p>';
+                } else {
+                    data.forEach(item => {
+                        responseDiv.innerHTML += `<p>${item.title}: ${item.details}</p>`;
+                    });
+                }
+            })
+            .catch(error => {
+                loadingDiv.style.display = 'none';  
+                console.error('Error:', error);
+                responseDiv.innerHTML = '<p>Error occurred while processing data.</p>';
+            });
+        }
+
+        function handleGenerateTourFromPdf(userInput) {
+    const loadingDiv = document.getElementById('loading');
+    loadingDiv.style.display = 'block';  
+    const responseDiv = document.getElementById('response');
+    responseDiv.innerHTML = '';  
+
+    fetch('/generate-tour-from-pdf', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ interest: userInput })
+    })
+    .then(response => response.json())  
+    .then(data => {
+        loadingDiv.style.display = 'none';  
+        responseDiv.innerHTML = '<h2>Events:</h2>';
+
+        
+        if (data.error) {
+            responseDiv.innerHTML += `<p>${data.error}</p>`;
+        } else if (data.events && data.events.length > 0) {
+
+            data.events.forEach(event => {
+                responseDiv.innerHTML += `<p><strong>${event.name}</strong><br>${event.date}<br>${event.description}</p>`;
+            });
+        } else {
+            responseDiv.innerHTML += '<p>There are no events available for these activities.</p>';
+        }
+    })
+    .catch(error => {
+        loadingDiv.style.display = 'none';  
+        console.error('Error:', error);
+        responseDiv.innerHTML = '<p>Error occurred while processing data.</p>';
+    });
+}
+
+        function handleSendEmail(tourDetails) {
+            const email = prompt("Enter your email to send the tour schedule:");
+
+            if (email) {
+                fetch('/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email, details: tourDetails })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Mail sent successfully!');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while sending mail');
+                });
+            } else {
+                alert('No email address entered');
+            }
+        }
+    </script>
+</body>
+</html>
+
