@@ -19,22 +19,19 @@ app = Flask(__name__)
 
 
 
-GOOGLE_API_KEY = 'AIzaSyCYh-XF6MjQ_pxNUYYBbpTJbTDiiyLkdv8'
-openai.api_key = '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'
+GOOGLE_API_KEY = 'Your API key'
+openai.api_key = 'Your API Key'
     
 PDF_FILE_PATH = 'event.pdf'
 
-EMAIL_SENDER = 'hind.althabi@gmail.com'
-EMAIL_PASSWORD = 'wemg dvqm cgty achl'
+EMAIL_SENDER = 'Your Email'
+EMAIL_PASSWORD = 'Your Password'
 
 
 import fitz
 
 
 doc = fitz.open(PDF_FILE_PATH)  
-
-
-
 
 
 @app.route('/')
@@ -45,8 +42,6 @@ def home():
 @app.route('/chat', methods=['POST'])
 def chat():
     user_request = request.json.get('request')
-
-    
     prompt = f"""
     You are a tour guide expert. Provide the best locations based on the user request.
     For each location, return the name, address, and city, separated by a pipe (|) for each location.
